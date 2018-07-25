@@ -28,7 +28,7 @@ dcTest <- longArray(row.ids = dc.row.ids,
 					col.ids = dc.col.ids, 
 					data = list(info=dc.info, raw=dc.raw))
 
-save(dcTest, file="dcTest.RData")
+#save(dcTest, file="dcTest.RData")
 dcTest[c("5-FU","Bortezomib", "Erlotinib"), "A2058"]$info
 dcTest[c("5-FU","Bortezomib", "Erlotinib"), "A2058"]$raw
 
