@@ -60,7 +60,6 @@ dcTest[c("5-FU","Bortezomib", "Erlotinib"), "A2058"]$raw # "row and columns" pre
 
 
 
-
 library(SummarizedExperiment)
 
 dcSE <- SummarizedExperiment(dcTest)
