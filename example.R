@@ -22,6 +22,7 @@ dc.row.ids <- dc.info[,c(1,2,3)]
 dc.col.ids <- dc.info[,c(1,4)]
 dc.info <- dc.info[,-c(2,3,4)]
 
+source("R/longArray.R")
 
 dcTest <- longArray(row.ids = dc.row.ids, 
 					col.ids = dc.col.ids, 
