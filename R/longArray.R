@@ -128,7 +128,7 @@ setMethod("[[", c("longArray", "ANY", "missing"),
 #     x
 # })
 
-.DollarNames.SummarizedExperiment <- function(x, pattern = "")
+.DollarNames.longArray <- function(x, pattern = "")
     grep(pattern, names(x@listData), value=TRUE)
 
 setMethod("$", "longArray",
