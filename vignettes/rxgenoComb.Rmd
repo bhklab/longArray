@@ -40,7 +40,7 @@ This is a small slice of data derivable from
 `r nrow(dc)` records in `dc`.
 
 We can get an informal look at the effects on viability
-using a simple ggplot2 call in `viabHeatmap`.
+using a simple ggplot2 call in `viabDots`.
 
 ```{r lkdd}
 library(dplyr)
