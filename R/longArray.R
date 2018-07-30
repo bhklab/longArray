@@ -1,6 +1,11 @@
-require(S4Vectors)
-require(SummarizedExperiment)
+#require(S4Vectors)
+#require(SummarizedExperiment)
 
+
+#' @import S4Vectors
+#' @import SummarizedExperiment
+#' @import data.table
+setOldClass("data.table")
 setClassUnion("dt.df", c("data.table", "data.frame"))
 
 .longArray <- setClass("longArray", slots = list(col.ids = "dt.df",
@@ -13,6 +18,12 @@ setClassUnion("dt.df", c("data.table", "data.frame"))
 .longArray.DT <- setClass("longArray.DT", contains = "longArray")
 
 
+#' construct a longArray instance
+#' @param row.ids define
+#' @param col.ids define
+#' @param data define
+#' @param \dots define
+#' @export
 longArray <- function(row.ids, col.ids, data, ...){
     dot.args <- list(...)
 

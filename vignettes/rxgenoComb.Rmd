@@ -1,0 +1,154 @@
+---
+title: "Data representation for combinatorial pharmacogenomics"
+author: "Vincent J. Carey, stvjc at channing.harvard.edu"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{Data representation for combinatorial pharmacogenomics}
+  %\VignetteEncoding{UTF-8}
+output:
+  BiocStyle::html_document:
+    highlight: pygments
+    number_sections: yes
+    theme: united
+    toc: yes
+---
+
+```{r setup,echo=FALSE,results="hide"}
+suppressWarnings({
+suppressPackageStartupMessages({
+library(pharmGxComb)
+library(BiocStyle)
+library(ggplot2)
+library(magrittr)
+library(dplyr)
+})
+})
+```
+
+# Introduction
+
+Consider the following table representing
+combination drug experimental design **for a given cell line**:
+```{r lkd}
+library(pharmGxComb)
+data(dc)
+table(dc$drugA_name[1:5000], 
+   dc$drugB_name[1:5000])[1:5,1:5]
+```
+This is a small slice of data derivable from
+`r nrow(dc)` records in `dc`.
+
+We can get an informal look at the effects on viability
+using a simple ggplot2 call in `viabDots`.
+
+```{r lkdd}
+library(dplyr)
+library(magrittr)
+viabDots(dc, drugA="5-FU", drugB="ABT-888", incell_line="CAOV3")
+```
+
+A very naive test of interaction between 5-FU and ABT-888 concentrations
+on viability in CAOV3 is given with
+```{r lkreg}
+summary(viabReg(dc, drugA="5-FU", drugB="ABT-888", incell_line="CAOV3"))
+```
+
+# Thoughts on data structure and use cases
+
+Drugs and cell lines are the main experimental factors.  There
+is a single assay for viability.  We may have genomic data as well,
+but the design underlying the genomic assays will determine
+how to think about data structure.
+
+At this stage it does not seem clear how to reuse existing Bioc
+classes.  Here are a few considerations, to be weighed against
+highest scientific priorities.
+
+- Ordering cell lines with respect to sensitivity to a given
+combination
+
+```{r ordcell,cache=TRUE}
+all_lines = unique(dc$cell_line)
+all_regs = lapply(all_lines, function(x)
+    summary(viabReg(dc, drugA="5-FU", drugB="ABT-888", incell_line=x))$coef)
+names(all_regs) = all_lines
+all_regs_t = sapply(all_regs, function(x)x[4,3])
+all_regs_p = sapply(all_regs, function(x)x[4,4])
+rep = rbind(all_regs_t, all_regs_p)
+rep[,order(rep[2,])[1:5]]
+```
+
+- Assessing consistency of combination effects on **related cell lines**.
+In this case some aspects of the cell line ontology might
+be helpful.  How many tokens for cell line in
+the test data can be mapped to CLO?
+
+```{r lklklk}
+uu = unique(dc$cell_line)
+clo = ontoProc::getCellLineOnto()
+ii = lapply(uu, function(x) grep(x, clo$name, ignore.case=TRUE, value=TRUE))
+jj = ii[sapply(ii,length)>0]
+names(jj) = uu[sapply(ii,length)>0]
+jj
+```
+
+So `r length(jj)`/`r length(uu)` is the fraction of
+cell line tokens "directly mappable" to cell line
+ontology terms.
+
+- Assessing consistency of effects among related compounds.
+Here the ChEBI compound ontology could help define
+"distances" between compounds; there are surely
+more precise approaches.
+
+```{r zzz}
+ch = ontoProc::getChebiOnto()
+mm = lapply(alld, function(x) grep(x, ch$name, value=TRUE))
+nn = mm[which(sapply(mm, function(x)length(x)>0))]
+names(nn) = alld[which(sapply(mm, function(x)length(x)>0))]
+nn
+```
+There are not many direct matches.  When we have a tag,
+we can find out about the compound class.
+```{r lklk}
+ch$name[ch$parent[["CHEBI:8988"]]]
+```
+With standard naming, we can group compounds more effectively.
+
+# Summary
+
+We need to elaborate the key use cases.  The long
+table representation seems very useful but it does
+not immediately fit with the key Bioc classes.
+
+It may be worth pointing out that there is an
+approach in restfulSE for lazily converting a long
+table layout to a "delayed" SummarizedExperiment.
+The back end is BigQuery so you will need to be
+able to authenticate to make use of the isb-cgc "project".
+`library(restfulSE); example(BQ3_Array)` and
+the related source spell this out.  It is clumsy.
+
+
+
+
+
+
+<!--
+
+> head(dc)
+  BatchID cell_line drugA_name drugA.Conc..µM. drugB_name drugB.Conc..µM.
+1       1     A2058       5-FU            0.35    ABT-888            0.35
+2       1     A2058       5-FU            0.35    ABT-888            1.08
+3       1     A2058       5-FU            0.35    ABT-888            3.25
+4       1     A2058       5-FU            0.35    ABT-888           10.00
+5       1     A2058       5-FU            1.08    ABT-888            0.35
+6       1     A2058       5-FU            1.08    ABT-888            1.08
+       combination_name viability1 viability2 viability3 viability4 mu.muMax
+1 X5.FU_ABT.888_A2058_1      0.971      1.090      0.949      0.996    0.992
+2 X5.FU_ABT.888_A2058_1      1.124      0.180      0.917      0.962    0.968
+3 X5.FU_ABT.888_A2058_1      1.043      0.878      0.922      0.910    0.955
+4 X5.FU_ABT.888_A2058_1      0.919      0.784      0.795      0.788    0.882
+
+-->

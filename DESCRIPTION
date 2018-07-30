@@ -1,0 +1,14 @@
+Package: pharmGxComb
+Title: concepts of data representation for pharmacogenomics
+Description: Illustrate concepts of data representation for pharmacogenomics.
+Version: 0.0.0
+Author: Vince Carey
+Suggests: knitr
+Imports: SummarizedExperiment, data.table, S4Vectors
+Depends: 
+Maintainer: VJ Carey <stvjc@channing.harvard.edu>
+License: Artistic-2.0
+LazyLoad: yes
+biocViews: variants
+VignetteBuilder: knitr
+RoxygenNote: 6.0.1
