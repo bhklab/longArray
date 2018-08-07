@@ -27,6 +27,21 @@ setClassUnion("dt.df", c("data.table", "data.frame"))
 longArray <- function(row.ids, col.ids, data, ...){
     dot.args <- list(...)
 
+    all(as.data.frame(col.ids)[,1] == as.data.frame(row.ids)[,1]) || stop("Column and Row defining tables have different number of PKs")
+
+    if(is(row.ids[[1]], "factor")){
+        row.ids[[1]] <- as.character(row.ids[[1]])
+    }
+
+
+    if(is(col.ids[[1]], "factor")){
+        col.ids[[1]] <- as.character(col.ids[[1]])
+    }
+    data <- lapply(data, function(x){
+        x[[1]] <- as.character(x[[1]])
+        return(x)
+    })
+
     if("data.table" %in% class(row.ids)){
         setkey(row.ids)
         
@@ -35,7 +50,6 @@ longArray <- function(row.ids, col.ids, data, ...){
         setkey(col.ids)   
     }
 
-    !any(!col.ids[,1] == row.ids[,1]) || stop("Column and Row defining tables have different number of PKs")
 
 
     colnames(row.ids)[1] <- "id"
@@ -69,7 +83,6 @@ setMethod(`[`, "longArray.DT", function(x, i, j, ..., drop=if (missing(i)) TRUE 
     if(missing(i)){
         i <- rownames(x)
     }
-
     if(missing(j)){
         if(Narg == 2) {
             j <- i
@@ -77,6 +90,14 @@ setMethod(`[`, "longArray.DT", function(x, i, j, ..., drop=if (missing(i)) TRUE 
         } else {
             j <- colnames(x)
         }
+    }
+
+    if(is.null(j)){
+        return(NULL)
+    }
+
+    if(is.null(i)){
+        return(NULL)
     }
 
     if(is.numeric(i)){
@@ -128,16 +149,23 @@ setMethod(`[`, "longArray.DT", function(x, i, j, ..., drop=if (missing(i)) TRUE 
 setMethod("[[", c("longArray", "ANY", "missing"),
     function(x, i, j, ...)
 {   
+    if(! i %in% names(x)) return(NULL)
     ids <- x@listData[[i]][,id]
-    return(cbind(x@row.ids[ids,],x@col.ids[ids,-1],x@listData[[i]][,-1]))
+    return(cbind(x@row.ids[.(ids),],x@col.ids[.(ids),-1],x@listData[[i]][,-1]))
 })
 
-# setReplaceMethod("[[", c("SummarizedExperiment", "ANY", "missing"),
-#     function(x, i, j, ..., value)
-# {
-#     colData(x)[[i, ...]] <- value
-#     x
-# })
+setReplaceMethod("[[", c("longArray.DT", "ANY", "missing"),
+    function(x, i, j, ..., value)
+{
+    value <- data.table(value)
+    if(!all(value[[1]] %in% getkeys(x))){
+        stop("First column of the replacement must contain primary keys and match into the currently defined primary keys in the ")
+    }
+    colnames(value)[[1]] <- "id"
+    setkeyv(value, "id")
+    x@listData[[i]] <- value
+    x
+})
 
 .DollarNames.longArray <- function(x, pattern = "")
     grep(pattern, names(x@listData), value=TRUE)
@@ -184,7 +212,9 @@ setMethod("show", signature=signature(object="longArray"),
         cat(dms[2],"\"columns\" across ", length(object@col.ids) - 1," variable(s) \n")
 })
 
+setMethod("names", "longArray", function(x) return(names(x@listData)))
 
-
+setGeneric("getkeys", function(x) standardGeneric("getkeys"))
+setMethod("getkeys", "longArray", function(x) return(unlist(x@col.ids[[1]])))
 
 # sens.info[rep(list(rCI), 2), on=c("cellid", "drugid"), nomatch=0]
