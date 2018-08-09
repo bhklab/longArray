@@ -217,4 +217,6 @@ setMethod("names", "longArray", function(x) return(names(x@listData)))
 setGeneric("getkeys", function(x) standardGeneric("getkeys"))
 setMethod("getkeys", "longArray", function(x) return(unlist(x@col.ids[[1]])))
 
+setGeneric("getIDColNames", function(x) standardGeneric("getIDColNames"))
+setMethod("getIDColNames", "longArray", function(x) return(union(colnames(x@col.ids), colnames(x@row.ids))))
 # sens.info[rep(list(rCI), 2), on=c("cellid", "drugid"), nomatch=0]
