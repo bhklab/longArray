@@ -213,6 +213,7 @@ setMethod("show", signature=signature(object="longArray"),
 })
 
 setMethod("names", "longArray", function(x) return(names(x@listData)))
+setMethod("length", "longArray", function(x) return(length(x@listData)))
 
 setGeneric("getkeys", function(x) standardGeneric("getkeys"))
 setMethod("getkeys", "longArray", function(x) return(unlist(x@col.ids[[1]])))
